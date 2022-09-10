@@ -1,10 +1,24 @@
 import * as PIXI from "pixi.js";
 import fragmentShader from "./shaders/fragment.glsl";
 import noiseShader from "./shaders/noise.glsl";
-import textureImage from "./assets/2.jpg";
+import t1 from "./assets/1.jpg";
+import t2 from "./assets/2.jpg";
+import t3 from "./assets/3.jpg";
+import t4 from "./assets/4.jpg";
+import t5 from "./assets/5.jpg";
+import t6 from "./assets/6.jpg";
+import t7 from "./assets/7.jpg";
+import t8 from "./assets/8.jpg";
+import t9 from "./assets/9.jpg";
 import fit from "math-fit";
+import GUI from "lil-gui";
+import GSAP from "gsap";
+
+const gui = new GUI();
 
 const IMAGE_ASPECT = 1.7777;
+
+let currImageIndex = 0;
 
 const app = new PIXI.Application({
     width: window.innerWidth,
@@ -14,6 +28,20 @@ const app = new PIXI.Application({
     resolution: window.devicePixelRatio || 1,
     resizeTo: window,
 });
+
+const uniforms = {
+    uResolution: new PIXI.Point(
+        window.innerWidth * window.devicePixelRatio,
+        window.innerHeight * window.devicePixelRatio
+    ),
+    uTime: app.uTime,
+    uThreshold: 0.0,
+    // Delete this
+    uScale: new PIXI.Point(1, 1),
+};
+
+gui.add(uniforms, "uThreshold", 0, 1, 0.01);
+
 // Resizes renderer view in CSS pixels to allow for resolutions other than 1
 // app.renderer.autoDensity = true;
 // Resize the view to match viewport dimensions
@@ -21,30 +49,50 @@ const app = new PIXI.Application({
 app.uTime = 0;
 
 const resources = PIXI.Loader.shared.resources;
+const imagePaths = [t1, t2, t3, t4, t5, t6, t7, t8, t9];
+let loadedImages = [];
+const loadingTextures = [];
+
+const loadImages = (paths, whenLoaded) => {
+    var imgs = [];
+    paths.forEach(function (path) {
+        var img = new Image();
+        img.onload = function () {
+            imgs.push(img);
+            if (imgs.length == paths.length) whenLoaded(imgs);
+        };
+        img.src = path;
+    });
+};
+
+loadImages(imagePaths, (images) => {
+    loadedImages = images;
+    loadedImages.forEach((img) => {
+        let texture = PIXI.Texture.from(img);
+        loadingTextures.push(texture);
+    });
+    const base = new PIXI.AnimatedSprite(loadingTextures);
+
+    base.anchor.set(0.5);
+    // base.position.set(base.texture.orig.width / 2, base.texture.orig.height / 2);
+    base.x = window.innerWidth / 2;
+    base.y = window.innerHeight / 2;
+    base.width = window.innerWidth;
+    base.height = window.innerHeight;
+
+    app.stage.addChild(base);
+});
 
 // Load resources, then init the app
 PIXI.Loader.shared.add(["../shaders/invert.fs"]);
 
-const texture = PIXI.Texture.from(textureImage);
-
-const base = new PIXI.Sprite(texture);
+const texture = PIXI.Texture.from(t1);
 
 app.render(base, texture);
 
 // const invertShader = resources["../shaders/invert.fs"].data;
 // Create a new Filter using the fragment shader
 // We don't need a custom vertex shader, so we set it as `undefined`
-const uniforms = {
-    uResolution: new PIXI.Point(
-        window.innerWidth * window.devicePixelRatio,
-        window.innerHeight * window.devicePixelRatio
-    ),
-    uProgress: 0.0,
-    uTime: app.uTime,
-    uThreshold: 0.0,
-    uScale: new PIXI.Point(1, 1),
-};
-console.log(uniforms.uResolution);
 
 // const noiseFilter = new PIXI.Filter(undefined, noiseShader, uniforms);
 // base.filters = [noiseFilter];
@@ -73,19 +121,29 @@ base.filters = [invertFilter];
 
 // app.stage.x = window.innerWidth * 0.5;
 // app.stage.y = window.innerHeight * 0.5;
-base.anchor.set(0.5);
-// base.position.set(base.texture.orig.width / 2, base.texture.orig.height / 2);
-base.x = window.innerWidth / 2;
-base.y = window.innerHeight / 2;
-base.width = window.innerWidth;
-base.height = window.innerHeight;
-
-app.stage.addChild(base);
 
 app.ticker.add((delta) => {
     app.uTime += delta;
     uniforms.uTime = app.uTime;
+    // this will have to reset after each "slide"
     uniforms.uThreshold += delta;
+});
+
+const incrementSlide = () => {
+    console.log("incrementing slide, ", currImageIndex);
+    if (incrementSlide >= loadedImages.length - 1) {
+        currImageIndex = 0;
+    } else {
+        currImageIndex++;
+    }
+    // base.texture.set(loadedImages[currImageIndex]);
+};
+
+GSAP.set(incrementSlide, {
+    delay: 3,
+    onRepeat: incrementSlide,
+    repeat: -1,
+    repeatDelay: 3,
 });
 
 const textureDimensions = {
@@ -120,7 +178,6 @@ const resize = () => {
         cover.top + viewportDimensions.h / 2
     );
     base.scale.set(cover.scale, cover.scale);
-    console.log(cover, textureDimensions, viewportDimensions, base);
 };
 
 window.addEventListener("resize", resize);

@@ -4,7 +4,6 @@ precision mediump float;
 
 // from js
 uniform vec2 uResolution;
-uniform float uProgress;
 uniform float uTime;
 uniform sampler2D uNoiseShader;
 uniform float uThreshold;
@@ -104,9 +103,9 @@ void main () {
 //   float red = 1.0 - texture2D(uSampler, vTextureCoord).r;
 //   float green = 1.0 - texture2D(uSampler, vTextureCoord).g;
 //   float blue = 1.0 - texture2D(uSampler, vTextureCoord).b;
-  float red = mix(1.0 - texture2D(uSampler, newUV).r, texture2D(uSampler, newUV).r, uProgress);
-  float green = mix(1.0 - texture2D(uSampler, newUV).g, texture2D(uSampler, newUV).g, uProgress);
-  float blue = mix(1.0 - texture2D(uSampler, newUV).b, texture2D(uSampler, newUV).b, uProgress);
+  // float red = mix(1.0 - texture2D(uSampler, newUV).r, texture2D(uSampler, newUV).r, uProgress);
+  // float green = mix(1.0 - texture2D(uSampler, newUV).g, texture2D(uSampler, newUV).g, uProgress);
+  // float blue = mix(1.0 - texture2D(uSampler, newUV).b, texture2D(uSampler, newUV).b, uProgress);
 
 //   float size = mix(uProgress, sqrt(uProgress), 0.5);   
 //   size = size * 1.12 + 0.0000001; // just so 0.0 and 1.0 are fully (un)frozen and i'm lazy
@@ -123,8 +122,8 @@ void main () {
   // could use a shaping function to ease
     float noise = snoise(vec3(newUV.x * 2., newUV.y * 2., .001 * uTime)) - (uThreshold * .005) + 1.5;
     float clampedNoise = clamp(noise, 0., 1.);
-    float blendMask = smoothstep(dot(uProgress,uProgress) * dot(uProgress,uProgress), uProgress, noise);
-    float maskEase = smoothstep(1., 0., blendMask);
+    // float blendMask = smoothstep(dot(uProgress,uProgress) * dot(uProgress,uProgress), uProgress, noise);
+    // float maskEase = smoothstep(1., 0., blendMask);
     // gl_FragColor = vec4(vec3(blendMask), 1.0);
 
 
