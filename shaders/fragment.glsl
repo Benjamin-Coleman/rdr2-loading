@@ -126,8 +126,15 @@ void main () {
     // float maskEase = smoothstep(1., 0., blendMask);
     // gl_FragColor = vec4(vec3(blendMask), 1.0);
 
+    vec4 color = mix(texture2D(uSampler, newUV), 1.0 - texture2D(uSampler, newUV), clampedNoise);
 
-  gl_FragColor = mix(texture2D(uSampler, newUV), 1.0 - texture2D(uSampler, newUV), clampedNoise);
+    // Darken
+    // might need map
+    // kind of want value 0-1 for the threshold
+
+
+
+  gl_FragColor = color;
 
 
   //  gl_FragColor = vec4(vec3(newUV.x), 1.);

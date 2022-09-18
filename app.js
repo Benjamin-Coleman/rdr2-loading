@@ -19,6 +19,8 @@ const gui = new GUI();
 const IMAGE_ASPECT = 1.7777;
 
 let currImageIndex = 0;
+// this is trash and should be in a class
+let base = null;
 
 const app = new PIXI.Application({
     width: window.innerWidth,
@@ -71,7 +73,8 @@ loadImages(imagePaths, (images) => {
         let texture = PIXI.Texture.from(img);
         loadingTextures.push(texture);
     });
-    const base = new PIXI.AnimatedSprite(loadingTextures);
+    base = new PIXI.Sprite(loadingTextures[currImageIndex]);
+    base.filters = [invertFilter];
 
     base.anchor.set(0.5);
     // base.position.set(base.texture.orig.width / 2, base.texture.orig.height / 2);
@@ -81,14 +84,13 @@ loadImages(imagePaths, (images) => {
     base.height = window.innerHeight;
 
     app.stage.addChild(base);
+    app.render(base, texture);
 });
 
 // Load resources, then init the app
 PIXI.Loader.shared.add(["../shaders/invert.fs"]);
 
 const texture = PIXI.Texture.from(t1);
-
-app.render(base, texture);
 
 // const invertShader = resources["../shaders/invert.fs"].data;
 // Create a new Filter using the fragment shader
@@ -117,7 +119,6 @@ app.render(base, texture);
 const invertFilter = new PIXI.Filter(undefined, fragmentShader, uniforms);
 
 // // Assign the filter to the background Sprite
-base.filters = [invertFilter];
 
 // app.stage.x = window.innerWidth * 0.5;
 // app.stage.y = window.innerHeight * 0.5;
@@ -126,24 +127,33 @@ app.ticker.add((delta) => {
     app.uTime += delta;
     uniforms.uTime = app.uTime;
     // this will have to reset after each "slide"
+
+    // should be duration in seconds / seconds passed
     uniforms.uThreshold += delta;
+    // console.log("uThreshold: ", uniforms.uThreshold);
 });
 
 const incrementSlide = () => {
     console.log("incrementing slide, ", currImageIndex);
-    if (incrementSlide >= loadedImages.length - 1) {
-        currImageIndex = 0;
-    } else {
-        currImageIndex++;
-    }
+    // const loadingTextures = [];
+    currImageIndex++;
+    uniforms.uThreshold = 0;
+    base.texture =
+        loadingTextures[(currImageIndex + 1) % loadingTextures.length];
+    // if (incrementSlide >= loadedImages.length - 1) {
+    //     currImageIndex = 0;
+    // } else {
+    //     currImageIndex++;
+    // }
+
     // base.texture.set(loadedImages[currImageIndex]);
 };
 
 GSAP.set(incrementSlide, {
-    delay: 3,
+    delay: 7,
     onRepeat: incrementSlide,
     repeat: -1,
-    repeatDelay: 3,
+    repeatDelay: 7,
 });
 
 const textureDimensions = {
