@@ -120,7 +120,7 @@ void main () {
 
 
   // could use a shaping function to ease
-    float noise = snoise(vec3(newUV.x * 2., newUV.y * 2., .001 * uTime)) - (uThreshold * .005) + 1.5;
+    float noise = snoise(vec3(newUV.x * 2., newUV.y * 2., .001 * uTime)) - (uThreshold * 2.3) + 1.5;
     float clampedNoise = clamp(noise, 0., 1.);
     // float blendMask = smoothstep(dot(uProgress,uProgress) * dot(uProgress,uProgress), uProgress, noise);
     // float maskEase = smoothstep(1., 0., blendMask);

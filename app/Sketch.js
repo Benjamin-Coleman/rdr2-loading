@@ -91,6 +91,7 @@ export default class Sketch {
             fragmentShader,
             this.uniforms
         );
+        // new PIXI.filters.BlurFilter();
         this.sprite.filters = [invertFilter];
         this.sprite.anchor.set(0.5);
         this.sprite.x = window.innerWidth / 2;
@@ -153,15 +154,15 @@ export default class Sketch {
     start() {
         // Maybe make this a timeline?
         GSAP.set(this.incrementSlide.bind(this), {
-            delay: this.duration,
             onRepeat: this.incrementSlide.bind(this),
             repeat: this.paused ? 0 : -1,
             repeatDelay: this.duration,
         });
         this.ticker.add((delta) => {
-            this.time += delta;
-            this.uniforms.uTime = this.time;
-            this.uniforms.uThreshold += delta;
+            this.time += this.ticker.elapsedMS;
+            this.uniforms.uTime += delta;
+            this.uniforms.uThreshold =
+                (this.time % (this.duration * 1000)) / (this.duration * 1000);
         });
     }
 
