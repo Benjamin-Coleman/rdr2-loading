@@ -17,6 +17,7 @@ import t9 from "../assets/9.jpg";
 
 // Shader imports
 import fragmentShader from "../shaders/fragment.glsl";
+import darkenShader from "../shaders/darkenShader.glsl";
 
 const IMAGE_ASPECT = 1.7777;
 const TEXTURE_DIMENSIONS = {
@@ -48,6 +49,10 @@ export default class Sketch {
         this.textureImages = [t1, t2, t3, t4, t5, t6, t7, t8, t9];
         this.textures = [];
         this.sprite = null;
+        this.blackSprite = new PIXI.Sprite(PIXI.Texture.WHITE);
+        this.darkenUniforms = {
+            uThreshold: 0.0,
+        };
         this.ticker = this.pixi.ticker;
         this.duration = opts.duration || 5;
         this.currImageIndex = 0;
@@ -91,7 +96,6 @@ export default class Sketch {
             fragmentShader,
             this.uniforms
         );
-        // new PIXI.filters.BlurFilter();
         this.sprite.filters = [invertFilter];
         this.sprite.anchor.set(0.5);
         this.sprite.x = window.innerWidth / 2;
@@ -99,7 +103,20 @@ export default class Sketch {
         this.sprite.width = window.innerWidth;
         this.sprite.height = window.innerHeight;
 
+        // Black sprite to fade to black
+        const darkenFilter = new PIXI.Filter(
+            undefined,
+            darkenShader,
+            this.darkenUniforms
+        );
+        this.blackSprite.filters = [darkenFilter];
+        this.blackSprite.anchor.set(0.5);
+        this.blackSprite.width = window.innerWidth;
+        this.blackSprite.height = window.innerHeight;
+
         this.pixi.stage.addChild(this.sprite);
+        this.pixi.stage.addChild(this.blackSprite);
+        this.pixi.render(this.blackSprite);
         this.pixi.render(this.sprite);
     }
 
@@ -108,12 +125,6 @@ export default class Sketch {
     }
 
     resize() {
-        console.log(
-            this.pixi.renderer,
-            window.innerHeight,
-            window.innerWidth,
-            window.devicePixelRatio
-        );
         let scale = 1;
 
         const viewportDimensions = {
@@ -137,6 +148,7 @@ export default class Sketch {
             cover.top + viewportDimensions.h / 2
         );
         this.sprite.scale.set(cover.scale, cover.scale);
+        this.blackSprite.scale.set(window.innerWidth, window.innerHeight);
     }
 
     settings() {
@@ -163,12 +175,15 @@ export default class Sketch {
             this.uniforms.uTime += delta;
             this.uniforms.uThreshold =
                 (this.time % (this.duration * 1000)) / (this.duration * 1000);
+            this.darkenUniforms.uThreshold =
+                (this.time % (this.duration * 1000)) / (this.duration * 1000);
         });
     }
 
     incrementSlide() {
         this.currImageIndex++;
         this.uniforms.uThreshold = 0;
+        this.darkenUniforms.uThreshold = 0;
         this.sprite.texture =
             this.textures[(this.currImageIndex + 1) % this.textures.length];
         this.resize();

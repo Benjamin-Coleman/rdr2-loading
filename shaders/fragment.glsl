@@ -5,9 +5,7 @@ precision mediump float;
 // from js
 uniform vec2 uResolution;
 uniform float uTime;
-uniform sampler2D uNoiseShader;
 uniform float uThreshold;
-uniform vec2 uScale;
 
 // from pixi
 varying vec2 vTextureCoord;
@@ -94,7 +92,7 @@ float snoise(vec3 v){
 
 void main () {
 
-  vec2 newUV = (vTextureCoord - vec2(0.5)/uScale + vec2(0.5));
+  vec2 newUV = (vTextureCoord - vec2(0.5)/vec2(0.5));
   newUV = vTextureCoord;
 
 //   float red = 1.0 - texture2D(uSampler, uv).r;

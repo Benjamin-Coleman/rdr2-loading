@@ -12,6 +12,7 @@
         "sharp": "^0.29.1"
     },
     "dependencies": {
+        "glsl-fast-gaussian-blur": "^1.0.2",
         "gsap": "^3.11.1",
         "lil-gui": "^0.17.0",
         "math-fit": "^1.0.1",
