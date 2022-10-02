@@ -95,49 +95,14 @@ void main () {
   vec2 newUV = (vTextureCoord - vec2(0.5)/vec2(0.5));
   newUV = vTextureCoord;
 
-//   float red = 1.0 - texture2D(uSampler, uv).r;
-//   float green = 1.0 - texture2D(uSampler, uv).g;
-//   float blue = 1.0- texture2D(uSampler, uv).b;
-//   float red = 1.0 - texture2D(uSampler, vTextureCoord).r;
-//   float green = 1.0 - texture2D(uSampler, vTextureCoord).g;
-//   float blue = 1.0 - texture2D(uSampler, vTextureCoord).b;
-  // float red = mix(1.0 - texture2D(uSampler, newUV).r, texture2D(uSampler, newUV).r, uProgress);
-  // float green = mix(1.0 - texture2D(uSampler, newUV).g, texture2D(uSampler, newUV).g, uProgress);
-  // float blue = mix(1.0 - texture2D(uSampler, newUV).b, texture2D(uSampler, newUV).b, uProgress);
-
-//   float size = mix(uProgress, sqrt(uProgress), 0.5);   
-//   size = size * 1.12 + 0.0000001; // just so 0.0 and 1.0 are fully (un)frozen and i'm lazy
 //   vec2 lens = vec2(size, pow(size, 4.0) / 2.0);
 //   float dist = distance(newUV.xy, vec2(0.5, 0.5)); // the center of the froziness
 //   float vignette = pow(1.0-smoothstep(lens.x, lens.y, dist), 2.0);
 
-//  need to create a mask using the noise then that's the 3rd param of the mix
-//  figure out the edges later
+  float noise = snoise(vec3(newUV.x * 2., newUV.y * 2., .001 * uTime)) - (uThreshold * 2.9) + 1.5;
+  float clampedNoise = clamp(noise, 0., 1.);
 
-//   r.x = fbm( vUv + 1.0*q + vec2(1.7,9.2)+ 0.1*uTime );
-
-
-  // could use a shaping function to ease
-    float noise = snoise(vec3(newUV.x * 2., newUV.y * 2., .001 * uTime)) - (uThreshold * 2.3) + 1.5;
-    float clampedNoise = clamp(noise, 0., 1.);
-    // float blendMask = smoothstep(dot(uProgress,uProgress) * dot(uProgress,uProgress), uProgress, noise);
-    // float maskEase = smoothstep(1., 0., blendMask);
-    // gl_FragColor = vec4(vec3(blendMask), 1.0);
-
-    vec4 color = mix(texture2D(uSampler, newUV), 1.0 - texture2D(uSampler, newUV), clampedNoise);
-
-    // Darken
-    // might need map
-    // kind of want value 0-1 for the threshold
-
-
+  vec4 color = mix(texture2D(uSampler, newUV), 1.0 - texture2D(uSampler, newUV), clampedNoise);
 
   gl_FragColor = color;
-
-
-  //  gl_FragColor = vec4(vec3(newUV.x), 1.);
-
-  // gl_FragColor = texture2D(uNoiseShader, newUV);
-  // gl_FragColor = vec4(vec3(red, green, blue), 1.0);
-// gl_FragColor = vec4(vec3(clampedNoise), 1.);
 }

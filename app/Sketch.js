@@ -19,6 +19,9 @@ import t9 from "../assets/9.jpg";
 import fragmentShader from "../shaders/fragment.glsl";
 import darkenShader from "../shaders/darkenShader.glsl";
 
+// Utils imports
+import { BlurFilterPass } from "../utils/BlurFilterPass";
+
 const IMAGE_ASPECT = 1.7777;
 const TEXTURE_DIMENSIONS = {
     w: 2133,
@@ -30,11 +33,9 @@ export default class Sketch {
         this.pixi = new PIXI.Application({
             width: window.innerWidth,
             height: window.innerHeight,
-            // backgroundColor: 0x1099bb,
             view: document.querySelector("#scene"),
             resolution: window.devicePixelRatio || 1,
             autoDensity: true,
-            // resizeTo: window,
         });
         this.debug = opts.debug;
         this.time = 0;
@@ -45,6 +46,7 @@ export default class Sketch {
             ),
             uTime: this.time,
             uThreshold: 0.0,
+            blur: 0,
         };
         this.textureImages = [t1, t2, t3, t4, t5, t6, t7, t8, t9];
         this.textures = [];
@@ -53,14 +55,24 @@ export default class Sketch {
         this.darkenUniforms = {
             uThreshold: 0.0,
         };
+        this.blurUniforms = {
+            direction: [5, 5],
+            flip: this.currImageIndex % 2 !== 0,
+            uThreshold: this.darkenUniforms.uThreshold,
+        };
         this.ticker = this.pixi.ticker;
         this.duration = opts.duration || 5;
         this.currImageIndex = 0;
         this.paused = false;
+        this.audio = new Audio(
+            new URL("/assets/rdr2-loading.m4a", import.meta.url)
+        );
+        this.audioPlaying = false;
 
         this.init(() => {
             this.attachResize();
             this.settings();
+            this.startAudio();
             this.resize();
             this.start();
             this.pixi.start();
@@ -68,7 +80,6 @@ export default class Sketch {
     }
 
     init(cb) {
-        // do we need this?
         let that = this;
         const loader = PIXI.Loader.shared;
         this.textureImages.forEach((url, i) => {
@@ -89,6 +100,22 @@ export default class Sketch {
         loader.load();
     }
 
+    startAudio() {
+        window.addEventListener("click", () => {
+            if (this.audioPlaying) {
+                this.audioPlaying = false;
+                this.audio.pause();
+            } else {
+                this.audioPlaying = true;
+                this.audio.play();
+            }
+        });
+        this.audio.volume = 0.8;
+        this.audio.loop = true;
+        this.audio.controls = false;
+        this.audio.crossOrigin = "anonymous";
+    }
+
     addObjects() {
         this.sprite = new PIXI.Sprite(this.textures[this.currImageIndex]);
         const invertFilter = new PIXI.Filter(
@@ -102,6 +129,19 @@ export default class Sketch {
         this.sprite.y = window.innerHeight / 2;
         this.sprite.width = window.innerWidth;
         this.sprite.height = window.innerHeight;
+
+        // One horizontal pass, one vertical
+        const blurFilter = new BlurFilterPass(true, 8, 4, 1, 5, this.uniforms);
+        const blurFilter2 = new BlurFilterPass(
+            false,
+            8,
+            4,
+            1,
+            5,
+            this.uniforms
+        );
+
+        this.sprite.filters.push(blurFilter, blurFilter2);
 
         // Black sprite to fade to black
         const darkenFilter = new PIXI.Filter(
@@ -125,7 +165,7 @@ export default class Sketch {
     }
 
     resize() {
-        let scale = 1;
+        let scale = null;
 
         const viewportDimensions = {
             w: window.innerWidth,
@@ -135,10 +175,8 @@ export default class Sketch {
         this.pixi.renderer.resize(window.innerWidth, window.innerHeight);
         const viewportAspect = window.innerWidth / window.innerHeight;
         if (IMAGE_ASPECT > viewportAspect) {
-            // uniforms.uScale.set(IMAGE_ASPECT / viewportAspect, 1);
             scale = window.innerHeight / this.sprite.texture.height;
         } else {
-            // uniforms.uScale.set(1, viewportAspect / IMAGE_ASPECT);
             scale = window.innerWidth / this.sprite.texture.width;
         }
 
@@ -160,11 +198,15 @@ export default class Sketch {
             this.gui.add(this, "paused").onChange((val) => {
                 this.paused = val;
             });
+            this.gui.add(this.uniforms, "blur", 0, 20, 0.1).onChange((val) => {
+                this.uniforms.blur = val;
+            });
         }
     }
 
     start() {
         // Maybe make this a timeline?
+        // we need to clear and reset on duration GUI change
         GSAP.set(this.incrementSlide.bind(this), {
             onRepeat: this.incrementSlide.bind(this),
             repeat: this.paused ? 0 : -1,
