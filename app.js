@@ -1,6 +1,6 @@
 import Sketch from "./app/Sketch";
 
 new Sketch({
-    debug: true,
+    debug: false,
     duration: 10,
 });
