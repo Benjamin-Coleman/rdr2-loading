@@ -131,11 +131,11 @@ export default class Sketch {
         this.sprite.height = window.innerHeight;
 
         // One horizontal pass, one vertical
-        const blurFilter = new BlurFilterPass(true, 8, 4, 1, 5, this.uniforms);
+        const blurFilter = new BlurFilterPass(true, 8, 8, 1, 5, this.uniforms);
         const blurFilter2 = new BlurFilterPass(
             false,
             8,
-            4,
+            8,
             1,
             5,
             this.uniforms
@@ -212,13 +212,20 @@ export default class Sketch {
             repeat: this.paused ? 0 : -1,
             repeatDelay: this.duration,
         });
+        let normalizedProgress = 0;
         this.ticker.add((delta) => {
+            normalizedProgress =
+                (this.time % (this.duration * 1000)) / (this.duration * 1000);
             this.time += this.ticker.elapsedMS;
             this.uniforms.uTime += delta;
-            this.uniforms.uThreshold =
-                (this.time % (this.duration * 1000)) / (this.duration * 1000);
-            this.darkenUniforms.uThreshold =
-                (this.time % (this.duration * 1000)) / (this.duration * 1000);
+            this.uniforms.uThreshold = normalizedProgress;
+            this.darkenUniforms.uThreshold = normalizedProgress;
+            if (normalizedProgress > 0.8) {
+                this.uniforms.blur = (normalizedProgress - 0.8) * 100;
+            }
+            if (normalizedProgress < 0.2 && this.uniforms.blur > 0) {
+                this.uniforms.blur = (0.2 - normalizedProgress) * 100;
+            }
         });
     }
 
